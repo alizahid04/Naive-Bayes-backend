@@ -32,22 +32,25 @@ def predict():
         data = request.get_json()
         action = data.get("action")
         if not action:
-            return jsonify({"error": "No action specified."})
+            return jsonify({"error": "No action specified."}), 400
 
         features = {k: v for k, v in data.items() if k != "action"}
         new_data = pd.DataFrame([features])
 
         model, le_dict, le_target = load_model(action)
         if model is None:
-            return jsonify({"error": f"No model found for action '{action}'"})
+            return jsonify({"error": f"No model found for action '{action}'"}), 400
 
+        # Encode features
         for col in new_data.columns:
             if col in le_dict:
                 new_data[col] = le_dict[col].transform(new_data[col])
 
+        # Predict
         pred = model.predict(new_data)
         label = le_target.inverse_transform(pred)
 
+        # Get probability for all classes
         probs = model.predict_proba(new_data)
         class_probs = dict(zip(le_target.classes_, probs[0]))
         class_probs_percent = {k: f"{v*100:.2f}%" for k, v in class_probs.items()}
@@ -60,8 +63,12 @@ def predict():
         return jsonify(result)
 
     except Exception as e:
-        return jsonify({"error": str(e)})
+        return jsonify({"error": str(e)}), 500
+
+@app.route("/")
+def home():
+    return "Naive Bayes Backend is running!"
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
-    app.run(host="0.0.0.0", port=port, debug=True, use_reloader=False)
+    app.run(host="0.0.0.0", port=port, debug=True)

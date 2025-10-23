@@ -1,20 +1,21 @@
-# Use official Python image
-FROM python:3.9-slim
+# 1. Base image (Python environment)
+FROM python:3.12-slim
 
-# Set working directory
+# 2. Set working directory inside container
 WORKDIR /app
 
-# Copy requirements first (for caching)
+# 3. Copy requirements file first (helps cache dependencies)
 COPY requirements.txt .
 
-# Install dependencies
-RUN pip install --no-cache-dir -r requirements.txt
+# 4. Upgrade pip and install dependencies
+RUN pip install --no-cache-dir --upgrade pip \
+    && pip install --no-cache-dir -r requirements.txt
 
-# Copy the rest of the app
+# 5. Copy the rest of your project
 COPY . .
 
-# Expose port
+# 6. Expose the port your Flask app uses
 EXPOSE 5000
 
-# Command to run the app
+# 7. Command to run the Flask app
 CMD ["python", "backend_naive_bayes.py"]
